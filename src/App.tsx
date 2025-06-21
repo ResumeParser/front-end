@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import Uploader from './components/Uploader';
 import ResumeViewer from './components/ResumeViewer';
 
@@ -87,22 +88,44 @@ function App() {
       </header>
 
       <main className="flex-grow flex flex-col items-center justify-center p-4">
-        {!file ? (
-          <Uploader onFileSelect={setFile} />
-        ) : (
-          <div className="w-full max-w-4xl text-center">
-            <h2 className="text-2xl font-semibold mb-4">{file.name}</h2>
-            {isLoading ? (
-              <p>Extracting information...</p>
-            ) : resumeData ? (
-              <ResumeViewer data={resumeData} />
-            ) : (
-              <button onClick={handleGenerateSummary} className="bg-white text-black font-bold py-2 px-6 rounded-lg hover:bg-gray-200 transition-colors">
-                Generate Summary
-              </button>
-            )}
-          </div>
-        )}
+        <AnimatePresence mode="wait">
+          {!file ? (
+            <motion.div
+              key="uploader"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Uploader onFileSelect={setFile} />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="summary"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="w-full max-w-4xl text-center"
+            >
+              <h2 className="text-2xl font-semibold mb-4">{file.name}</h2>
+              {isLoading ? (
+                <p>Extracting information...</p>
+              ) : resumeData ? (
+                <ResumeViewer data={resumeData} />
+              ) : (
+                <motion.button 
+                  onClick={handleGenerateSummary} 
+                  className="bg-white text-black font-bold py-2 px-6 rounded-lg hover:bg-gray-200 transition-colors"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3, duration: 0.4}}
+                >
+                  Generate Summary
+                </motion.button>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
 
       <footer className="py-6 px-4 md:px-8 text-center text-gray-500">
