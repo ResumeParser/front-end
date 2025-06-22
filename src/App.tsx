@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Uploader from './components/Uploader';
 import ResumeViewer from './components/ResumeViewer';
 import LoadingIndicator from './components/LoadingIndicator';
+import Sidebar from './components/Sidebar';
+import { FiMenu } from 'react-icons/fi';
 
 // Definindo a interface aqui também para o estado
 interface ResumeData {
@@ -24,19 +26,32 @@ interface ResumeData {
   skills: string[];
 }
 
+interface ArchivedResume extends ResumeData {
+  id: string;
+  filename: string;
+  timestamp: string;
+}
+
 function App() {
-  const [file, setFile] = useState<File | null>(null);
-  const [resumeData, setResumeData] = useState<ResumeData | null>(null);
+  const [analyses, setAnalyses] = useState<ArchivedResume[]>([]);
+  const [currentAnalysisId, setCurrentAnalysisId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  const handleReset = () => {
-    setFile(null);
-    setResumeData(null);
-    setError(null);
-  };
+  useEffect(() => {
+    try {
+      const storedAnalyses = localStorage.getItem('resumeAnalyses');
+      if (storedAnalyses) {
+        setAnalyses(JSON.parse(storedAnalyses));
+      }
+    } catch (e) {
+      console.error("Failed to load analyses from localStorage", e);
+      setAnalyses([]);
+    }
+  }, []);
 
-  const handleGenerateSummary = async () => {
+  const handleGenerateSummary = async (file: File) => {
     if (!file) return;
     setIsLoading(true);
     setError(null);
@@ -55,8 +70,19 @@ function App() {
         throw new Error(errorData.detail || 'Something went wrong');
       }
 
-      const data = await response.json();
-      setResumeData(data);
+      const data: ResumeData = await response.json();
+      const newAnalysis: ArchivedResume = {
+        ...data,
+        id: Date.now().toString(),
+        filename: file.name,
+        timestamp: new Date().toISOString(),
+      };
+
+      const updatedAnalyses = [...analyses, newAnalysis];
+      setAnalyses(updatedAnalyses);
+      localStorage.setItem('resumeAnalyses', JSON.stringify(updatedAnalyses));
+      setCurrentAnalysisId(newAnalysis.id);
+
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
@@ -68,96 +94,88 @@ function App() {
     }
   };
 
+  const handleSelectAnalysis = (id: string) => {
+    setError(null);
+    setCurrentAnalysisId(id);
+  };
+
+  const handleNewAnalysis = () => {
+    setError(null);
+    setCurrentAnalysisId(null);
+  };
+  
+  const currentAnalysis = analyses.find(a => a.id === currentAnalysisId);
+
   return (
-    <div className="min-h-screen bg-gray-950 text-white flex flex-col font-sans">
-      <header className="py-8 px-4 md:px-8 text-center relative">
-        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-100 to-gray-500">
-          Resume Summarizer AI
-        </h1>
-        <p className="mt-2 text-lg text-gray-300">
-          {resumeData ? 'Here is your structured resume:' : 'Simply upload your resume and get a professional summary in seconds.'}
-        </p>
-        {(file || resumeData || error) && (
-          <button onClick={handleReset} className="absolute top-8 right-8 text-sm text-gray-400 hover:text-white transition-colors">
-            Start Over
-          </button>
-        )}
-      </header>
+    <div className="min-h-screen bg-gray-950 text-white flex font-sans">
+      <motion.aside
+        initial={false}
+        animate={{ width: isSidebarOpen ? 256 : 0 }}
+        transition={{ duration: 0.3 }}
+        className="flex-shrink-0 bg-gray-900/80 border-r border-gray-800 overflow-hidden"
+      >
+        <Sidebar 
+          analyses={analyses} 
+          currentAnalysisId={currentAnalysisId}
+          onSelectAnalysis={handleSelectAnalysis}
+          onNewAnalysis={handleNewAnalysis}
+        />
+      </motion.aside>
 
-      <main className="flex-grow flex flex-col items-center justify-center p-4">
-        <AnimatePresence mode="wait">
-          {!file ? (
-            <motion.div
-              key="uploader"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ duration: 0.3 }}
-            >
-              <Uploader onFileSelect={setFile} />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="summary"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="w-full max-w-4xl text-center"
-            >
-              <h2 className="text-2xl font-semibold mb-4">{file.name}</h2>
-              <AnimatePresence mode="wait">
-                {isLoading ? (
-                  <motion.div
-                    key="loader"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <LoadingIndicator />
-                  </motion.div>
-                ) : error ? (
-                  <motion.div
-                    key="error"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="text-red-400 bg-red-900/50 p-4 rounded-lg"
-                  >
-                    <p className="font-bold">An error occurred:</p>
-                    <p>{error}</p>
-                  </motion.div>
-                ) : resumeData ? (
-                  <motion.div 
-                    key="viewer"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.1 }}
-                  >
-                    <ResumeViewer data={resumeData} />
-                  </motion.div>
-                ) : (
-                  <motion.button
-                    key="generate-button"
-                    onClick={handleGenerateSummary}
-                    className="bg-white text-black font-bold py-2 px-6 rounded-lg hover:bg-gray-200 transition-colors"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    Generate Summary
-                  </motion.button>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </main>
+      <div className="flex-grow flex flex-col relative">
+         <button
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className="absolute top-6 left-6 z-10 p-2 text-gray-400 hover:text-white transition-colors"
+          aria-label="Toggle sidebar"
+        >
+          <FiMenu size={24} />
+        </button>
 
-      <footer className="py-6 px-4 md:px-8 text-center text-gray-500">
-        <p>&copy; {new Date().getFullYear()} Resume Summarizer. All rights reserved.</p>
-      </footer>
+        <header className="py-8 px-8 text-center relative border-b border-gray-800">
+          <div className={`${isSidebarOpen ? '' : 'ml-12'}`}>
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-100 to-gray-500">
+              Resume Summarizer AI
+            </h1>
+            <p className="mt-2 text-lg text-gray-300">
+              {currentAnalysis ? currentAnalysis.filename : 'Upload a new resume to get started'}
+            </p>
+          </div>
+        </header>
+
+        <main className="flex-grow flex flex-col items-center justify-center p-4">
+          <AnimatePresence mode="wait">
+            {isLoading ? (
+               <motion.div key="loader"><LoadingIndicator /></motion.div>
+            ) : error ? (
+              <motion.div
+                key="error"
+                className="text-red-400 bg-red-900/50 p-4 rounded-lg"
+              >
+                <p className="font-bold">An error occurred:</p>
+                <p>{error}</p>
+              </motion.div>
+            ) : currentAnalysis ? (
+              <motion.div 
+                key={currentAnalysis.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="w-full max-w-4xl"
+              >
+                <ResumeViewer data={currentAnalysis} />
+              </motion.div>
+            ) : (
+              <motion.div key="uploader" className="w-full max-w-lg">
+                <Uploader onFileSelect={handleGenerateSummary} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </main>
+
+        <footer className="py-6 px-4 md:px-8 text-center text-gray-500 border-t border-gray-800">
+          <p>&copy; {new Date().getFullYear()} Resume Summarizer. All rights reserved.</p>
+        </footer>
+      </div>
     </div>
   );
 }
