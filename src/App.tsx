@@ -24,35 +24,6 @@ interface ResumeData {
   skills: string[];
 }
 
-const mockResumeData: ResumeData = {
-  name: "John Doe",
-  email: "john.doe@email.com",
-  phone: "123-456-7890",
-  summary: "A highly skilled and motivated software engineer with 5 years of experience in developing and scaling web applications. Proficient in JavaScript, React, and Node.js.",
-  experience: [
-    {
-      title: "Senior Software Engineer",
-      company: "Tech Solutions Inc.",
-      date: "Jan 2021 - Present",
-      description: "Led the development of a new microservices-based architecture, improving system scalability by 40%. Mentored junior developers and conducted code reviews."
-    },
-    {
-      title: "Software Engineer",
-      company: "Innovate Co.",
-      date: "Jun 2018 - Dec 2020",
-      description: "Developed and maintained features for a large-scale e-commerce platform using React and Redux. Wrote unit and integration tests to ensure code quality."
-    }
-  ],
-  education: [
-    {
-      degree: "Bachelor of Science in Computer Science",
-      institution: "State University",
-      date: "2014 - 2018"
-    }
-  ],
-  skills: ["JavaScript", "TypeScript", "React", "Node.js", "Express", "MongoDB", "Docker", "AWS"]
-};
-
 function App() {
   const [file, setFile] = useState<File | null>(null);
   const [resumeData, setResumeData] = useState<ResumeData | null>(null);

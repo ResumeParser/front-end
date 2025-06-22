@@ -13,7 +13,12 @@ const Uploader = ({ onFileSelect }: UploaderProps) => {
     }
   }, [onFileSelect]);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'application/pdf': ['.pdf'],
+    },
+  });
 
   return (
     <motion.div
@@ -26,10 +31,10 @@ const Uploader = ({ onFileSelect }: UploaderProps) => {
         <input {...getInputProps()} />
         {
           isDragActive ?
-            <p className="text-gray-300">Drop the file here ...</p> :
+            <p className="text-gray-300">Drop the PDF here ...</p> :
             <>
-              <p className="text-gray-400">Drag and drop your file here</p>
-              <p className="text-sm text-gray-600 mt-2">or click to select a file</p>
+              <p className="text-gray-400">Drag and drop your PDF here</p>
+              <p className="text-sm text-gray-600 mt-2">or click to select a file (PDF only)</p>
             </>
         }
       </div>
