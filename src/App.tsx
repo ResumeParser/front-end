@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Uploader from './components/Uploader';
 import ResumeViewer from './components/ResumeViewer';
+import LoadingIndicator from './components/LoadingIndicator';
 
 // Definindo a interface aqui também para o estado
 interface ResumeData {
@@ -56,19 +57,44 @@ function App() {
   const [file, setFile] = useState<File | null>(null);
   const [resumeData, setResumeData] = useState<ResumeData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleReset = () => {
     setFile(null);
     setResumeData(null);
+    setError(null);
   };
 
-  const handleGenerateSummary = () => {
+  const handleGenerateSummary = async () => {
     if (!file) return;
     setIsLoading(true);
-    setTimeout(() => {
-      setResumeData(mockResumeData);
+    setError(null);
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('http://localhost:8000/parse-resume', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Something went wrong');
+      }
+
+      const data = await response.json();
+      setResumeData(data);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('An unknown error occurred.');
+      }
+    } finally {
       setIsLoading(false);
-    }, 2000);
+    }
   };
 
   return (
@@ -80,9 +106,9 @@ function App() {
         <p className="mt-2 text-lg text-gray-300">
           {resumeData ? 'Here is your structured resume:' : 'Simply upload your resume and get a professional summary in seconds.'}
         </p>
-        {(file || resumeData) && (
+        {(file || resumeData || error) && (
           <button onClick={handleReset} className="absolute top-8 right-8 text-sm text-gray-400 hover:text-white transition-colors">
-            Upload Another
+            Start Over
           </button>
         )}
       </header>
@@ -108,21 +134,51 @@ function App() {
               className="w-full max-w-4xl text-center"
             >
               <h2 className="text-2xl font-semibold mb-4">{file.name}</h2>
-              {isLoading ? (
-                <p>Extracting information...</p>
-              ) : resumeData ? (
-                <ResumeViewer data={resumeData} />
-              ) : (
-                <motion.button 
-                  onClick={handleGenerateSummary} 
-                  className="bg-white text-black font-bold py-2 px-6 rounded-lg hover:bg-gray-200 transition-colors"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.3, duration: 0.4}}
-                >
-                  Generate Summary
-                </motion.button>
-              )}
+              <AnimatePresence mode="wait">
+                {isLoading ? (
+                  <motion.div
+                    key="loader"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <LoadingIndicator />
+                  </motion.div>
+                ) : error ? (
+                  <motion.div
+                    key="error"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="text-red-400 bg-red-900/50 p-4 rounded-lg"
+                  >
+                    <p className="font-bold">An error occurred:</p>
+                    <p>{error}</p>
+                  </motion.div>
+                ) : resumeData ? (
+                  <motion.div 
+                    key="viewer"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.1 }}
+                  >
+                    <ResumeViewer data={resumeData} />
+                  </motion.div>
+                ) : (
+                  <motion.button
+                    key="generate-button"
+                    onClick={handleGenerateSummary}
+                    className="bg-white text-black font-bold py-2 px-6 rounded-lg hover:bg-gray-200 transition-colors"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    Generate Summary
+                  </motion.button>
+                )}
+              </AnimatePresence>
             </motion.div>
           )}
         </AnimatePresence>
@@ -132,7 +188,7 @@ function App() {
         <p>&copy; {new Date().getFullYear()} Resume Summarizer. All rights reserved.</p>
       </footer>
     </div>
-  )
+  );
 }
 
 export default App
