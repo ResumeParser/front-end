@@ -6,7 +6,7 @@ Esta é a interface (frontend) da aplicação Resume Summarizer AI, construída 
 
 - [Node.js](https://nodejs.org/) (versão 18 ou mais recente é recomendada)
 - [npm](https://www.npmjs.com/) (geralmente instalado junto com o Node.js)
-- O [servidor backend](../back-end) deve estar em execução.
+- O [servidor backend](https://github.com/ResumeParser/back-end) deve estar em execução.
 
 ## Instalação e Configuração
 
