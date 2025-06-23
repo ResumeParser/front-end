@@ -117,72 +117,75 @@ function App() {
   };
   
   return (
-    <div className="min-h-screen bg-gray-950 text-white flex font-sans">
-      <motion.aside
-        initial={false}
-        animate={{ width: isSidebarOpen ? 256 : 0 }}
-        transition={{ duration: 0.3 }}
-        className="flex-shrink-0 bg-gray-900/80 border-r border-gray-800 overflow-hidden"
-      >
-        <Sidebar 
-          analyses={history} 
-          currentAnalysisId={currentAnalysis?.id || null}
-          onSelectAnalysis={handleSelectAnalysis}
-          onNewAnalysis={handleNewAnalysis}
-        />
-      </motion.aside>
-
-      <div className="flex-grow flex flex-col relative">
-        <button
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="absolute top-6 left-6 z-10 p-2 text-gray-400 hover:text-white transition-colors"
-          aria-label="Toggle sidebar"
+    <div className="relative h-screen bg-gray-950 text-white font-sans">
+      <div className="flex h-full overflow-hidden">
+        <motion.aside
+          initial={false}
+          animate={{ width: isSidebarOpen ? 256 : 0 }}
+          transition={{ duration: 0.3 }}
+          className="flex-shrink-0 bg-gray-900/80 border-r border-gray-800 overflow-hidden"
         >
-          <FiMenu size={24} />
-        </button>
-        
-        <header className="py-8 px-8 text-center relative border-b border-gray-800">
-           <div className={`${isSidebarOpen ? '' : 'ml-12'}`}>
+          <Sidebar
+            analyses={history}
+            currentAnalysisId={currentAnalysis?.id || null}
+            onSelectAnalysis={handleSelectAnalysis}
+            onNewAnalysis={handleNewAnalysis}
+          />
+        </motion.aside>
+
+        <div className="flex-grow flex flex-col relative overflow-y-auto">
+          <header className="py-8 px-8 text-center relative border-b border-gray-800 flex-shrink-0">
+            <div className="pl-16">
               <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-100 to-gray-500">
                 Resume Summarizer AI
               </h1>
               <p className="mt-2 text-lg text-gray-300">
                 {currentAnalysis ? currentAnalysis.filename : 'Upload a new resume to get started'}
               </p>
-           </div>
-        </header>
+            </div>
+          </header>
 
-        <main className="flex-grow flex flex-col items-center justify-center p-4">
-          <AnimatePresence mode="wait">
-            {isLoading ? (
-              <motion.div key="loader"><LoadingIndicator /></motion.div>
-            ) : error ? (
-              <motion.div key="error" className="text-red-400 bg-red-900/50 p-4 rounded-lg">
-                <p className="font-bold">An error occurred:</p>
-                <p>{error}</p>
-              </motion.div>
-            ) : currentAnalysis ? (
-              <motion.div 
-                key={currentAnalysis.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="w-full max-w-4xl"
-              >
-                <ResumeViewer data={currentAnalysis} />
-              </motion.div>
-            ) : (
-              <motion.div key="uploader" className="w-full max-w-lg">
-                <Uploader onFileSelect={handleGenerateSummary} />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </main>
+          <main className="flex-grow flex flex-col items-center justify-center p-4">
+            <AnimatePresence mode="wait">
+              {isLoading ? (
+                <motion.div key="loader"><LoadingIndicator /></motion.div>
+              ) : error ? (
+                <motion.div key="error" className="text-red-400 bg-red-900/50 p-4 rounded-lg">
+                  <p className="font-bold">An error occurred:</p>
+                  <p>{error}</p>
+                </motion.div>
+              ) : currentAnalysis ? (
+                <motion.div
+                  key={currentAnalysis.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                  className="w-full max-w-4xl"
+                >
+                  <ResumeViewer data={currentAnalysis} />
+                </motion.div>
+              ) : (
+                <motion.div key="uploader" className="w-full max-w-lg">
+                  <Uploader onFileSelect={handleGenerateSummary} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </main>
 
-        <footer className="py-6 px-4 md:px-8 text-center text-gray-500 border-t border-gray-800">
-          <p>&copy; {new Date().getFullYear()} Resume Summarizer. All rights reserved.</p>
-        </footer>
+          <footer className="py-6 px-4 md:px-8 text-center text-gray-500 border-t border-gray-800 flex-shrink-0">
+            <p>&copy; {new Date().getFullYear()} Resume Summarizer. All rights reserved.</p>
+          </footer>
+        </div>
       </div>
+      <motion.button
+        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        className="absolute top-6 z-20 p-2 text-gray-400 hover:text-white transition-colors"
+        aria-label="Toggle sidebar"
+        animate={{ left: isSidebarOpen ? '272px' : '24px' }}
+        transition={{ duration: 0.3, ease: 'easeInOut' }}
+      >
+        <FiMenu size={24} />
+      </motion.button>
     </div>
   );
 }
