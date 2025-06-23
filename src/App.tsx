@@ -147,9 +147,7 @@ function App() {
 
           <main className="flex-grow flex flex-col items-center justify-center p-4">
             <AnimatePresence mode="wait">
-              {isLoading ? (
-                <motion.div key="loader"><LoadingIndicator /></motion.div>
-              ) : error ? (
+              {error ? (
                 <motion.div key="error" className="text-red-400 bg-red-900/50 p-4 rounded-lg">
                   <p className="font-bold">An error occurred:</p>
                   <p>{error}</p>
@@ -166,7 +164,7 @@ function App() {
                 </motion.div>
               ) : (
                 <motion.div key="uploader" className="w-full max-w-lg">
-                  <Uploader onFileSelect={handleGenerateSummary} />
+                  <Uploader onFileSelect={handleGenerateSummary} isLoading={isLoading} />
                 </motion.div>
               )}
             </AnimatePresence>
