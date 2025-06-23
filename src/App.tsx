@@ -42,6 +42,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [uploaderKey, setUploaderKey] = useState(0);
 
   // Fetch initial history
   useEffect(() => {
@@ -114,6 +115,7 @@ function App() {
   const handleNewAnalysis = () => {
     setCurrentAnalysis(null);
     setError(null);
+    setUploaderKey(prevKey => prevKey + 1);
   };
   
   return (
@@ -164,7 +166,11 @@ function App() {
                 </motion.div>
               ) : (
                 <motion.div key="uploader" className="w-full max-w-lg">
-                  <Uploader onFileSelect={handleGenerateSummary} isLoading={isLoading} />
+                  <Uploader
+                    key={uploaderKey}
+                    onFileSelect={handleGenerateSummary}
+                    isLoading={isLoading}
+                  />
                 </motion.div>
               )}
             </AnimatePresence>
